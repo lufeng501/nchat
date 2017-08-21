@@ -2,6 +2,18 @@ doctype html
 html
   head
     title= title
+    link(rel='stylesheet', href='/include/bootstrap/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/include/sweetalert/sweetalert.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
+
+    script(type='text/javascript', src='/include/jQuery/jquery-2.2.3.min.js')
+    script(type='text/javascript', src='/include/bootstrap/js/bootstrap.min.js')
+    script(type='text/javascript', src='/include/sweetalert/sweetalert.min.js')
+    script(type='text/javascript', src='/include/moment/moment.js')
+
+    block header
+
   body
     block content
+
+  block script

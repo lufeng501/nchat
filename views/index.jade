@@ -1,5 +1,125 @@
 extends layout
 
+block header
+  script(type='text/javascript', src='http://127.0.0.1:3001/socket.io/socket.io.js')
+
 block content
-  h1= title
-  p Welcome to #{title}
+
+  div.col-md-4
+
+  div.col-md-4
+    div.panel.panel-primary
+      div.panel-heading
+        p.panel-title #{title}
+      div.panel-body
+        pre#dialogue(style='height:300px;overflow: auto;')
+        div
+          textarea#message.form-control(rows='3')
+        br
+        div
+          button.btn.btn-primary(onclick='send()') 提交
+
+block script
+  script(type='text/javascript').
+
+    account = localStorage.getItem('account');
+
+    if (typeof(Storage) !== "undefined") {
+      if (!account) {
+        swal({
+            title: "注册一个用户名!",
+            type: "input",
+            showCancelButton: false,
+            closeOnConfirm: false,
+            animation: "slide-from-top",
+            inputPlaceholder: "随便写几个字吧"
+          },
+          function (inputValue) {
+            if (inputValue === false) return false;
+
+            if (inputValue === "") {
+              swal.showInputError("用户名不能为空!");
+              return false
+            }
+
+            localStorage.setItem('account', inputValue)
+
+            account = localStorage.getItem('account');
+
+            swal("Nice!", "注册成功");
+          }
+        );
+      }
+    } else {
+      alert('抱歉! 改浏览器不支持 web 存储')
+    }
+
+    // websocket连接
+    socket = io.connect('ws://127.0.0.1:3001');
+
+    function send() {
+      var msg = $('#message').val()
+      if (!msg) {
+        alert('消息不能为空');
+        return;
+      }
+      var data = {
+        "name": account,
+        "msg": msg,
+      }
+      socket.emit("message", data);
+    }
+
+    // 显示历史记录
+    socket.on("history", function (obj) {
+      var history = obj;
+      if (history.length > 0) {
+        $.each(history,function (key, item) {
+          if (item.name == account) {
+            var color = '#009933'
+          } else {
+            var color = '#CC6633'
+          }
+          var msg_div =
+            '<div>' +
+            '<div style="color:' + color + '" class="title"><p>' + item.name + ': <span style="color: #ccc">' + moment(item.time).format("YYYY-MM-DD H:m:s") + '</span></p></div>' +
+            '<div class="msgs">' +
+            '<p>' + item.msg + '</p>' +
+            '</div>' +
+            '</div>'
+
+          $('#dialogue').prepend(msg_div)
+        })
+        var scrollHeight = $('#dialogue')[0].scrollHeight
+        $("#dialogue").scrollTop(scrollHeight);
+      }
+    })
+
+    socket.on("message", function (obj) {
+      if (obj.name == account) {
+        var color = '#009933'
+      } else {
+        var color = '#CC6633'
+      }
+
+      var msg_div =
+        '<div>' +
+        '<div style="color:' + color + '" class="title"><p>' + obj.name + ': <span style="color: #ccc">' + moment(obj.time).format("YYYY-MM-DD H:m:s") + '</span></p></div>' +
+        '<div class="msgs">' +
+        '<p>' + obj.msg + '</p>' +
+        '</div>' +
+        '</div>'
+
+      $('#dialogue').append(msg_div)
+
+      var scrollHeight = $('#dialogue')[0].scrollHeight
+
+      $("#dialogue").scrollTop(scrollHeight);
+
+      $('#message').val('')
+    });
+
+    // 断开连接
+//    socket.on("disconnect", function () {
+//      localStorage.clear();
+//    });

@@ -7,8 +7,55 @@ var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
+var ws = require('./routes/ws');
+
+var SocketHander = require('./socket/index');
 
 var app = express();
+
+// 启动websocket服务，端口3001
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
+io.on('connection', function(socket){
+  console.log('a user connected');
+
+  socketHander = new SocketHander();
+
+  socketHander.connect()
+
+  var history = socketHander.getHistoryMessages();
+
+  history.then(
+    function (data) {
+      io.emit("history", data);
+    }
+  )
+
+  // 链接ID
+  var socketId = socket.id
+
+  // 断开连接
+  socket.on("disconnect", function() {
+    console.log("a user go out");
+  });
+
+  // 接收消息
+  socket.on("message", function(obj) {
+    var moment = require('moment')
+    obj.time = moment().valueOf();
+    socketHander.storeMessages(obj)
+    // 发送消息
+    io.emit("message", obj);
+  });
+
+});
+server.listen(3001)
+
+app.use(function(req, res, next){
+  res.io = io;
+  next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -22,8 +69,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// 允许跨域请求
+app.all('*', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 app.use('/', index);
 app.use('/users', users);
+app.use('/ws', ws);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
