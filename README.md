@@ -18,7 +18,7 @@ nchat是基于Node.js+Express+Websocket+Promies实现的简单聊天室系统，
 
 ### 部署和本地运行
 
- + 安装部署启动monogdb服务（持久化存储聊天记录）
+ + 安装部署启动mongodb服务（持久化存储聊天记录）
  + git clone https://github.com/lufeng501/nchat.git
  + npm install
  + npm start
