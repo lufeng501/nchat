@@ -20,6 +20,9 @@ var io = require('socket.io')(server);
 io.on('connection', function(socket){
   console.log('a user connected');
 
+  // 链接ID
+  var socketid = socket.id
+
   socketHander = new SocketHander();
 
   socketHander.connect()
@@ -28,12 +31,9 @@ io.on('connection', function(socket){
 
   history.then(
     function (data) {
-      io.emit("history", data);
+      io.to(socketid).emit("history", data);
     }
   )
-
-  // 链接ID
-  var socketId = socket.id
 
   // 断开连接
   socket.on("disconnect", function() {
